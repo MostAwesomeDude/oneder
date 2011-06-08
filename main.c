@@ -38,7 +38,7 @@ void initialize (void) {
     DDRA=0b00000000;
 
     /** Port B has the LED Array color control, SD card, and audio-out on it. Leave DDRB alone. ( 0 = Input and 1 = Output )*/
-    DDRB=0b11001111;
+    DDRB=0b11110000;
 
     /** Port C is for the 'row' of the LED array. They should always be outputs. ( 0 = Input and 1 = Output )*/
     DDRC=0b11111111;
@@ -61,77 +61,87 @@ void clearArray(void)
     PORTB &= ~((1 << PB6) | (1 << PB7));	// Disable latches
 }
 
-static unsigned char keys[] = {
-    //60, 60, 62, 64, 71, 71, 69, 69, 60, 60, 62, 64, 67, 65, 60, 62
-    72, 72, 74, 76, 83, 83, 81, 81, 72, 72, 74, 76, 79, 77, 72, 74
+struct note {
+    unsigned char pitch;
+    unsigned char duration;
 };
 
-/* Set the audio out to a certain amplitude.
- * Call this a lot, at regular intervals, to make sounds. */
-int set_audio(unsigned char amp) {
-    /* Mask to four bits. */
-    amp &= 0xf;
+static struct note roll[] = {
+    {76, 4}, {71, 2}, {72, 2}, {74, 2}, {76, 1}, {74, 1}, {72, 2}, {71, 2},
+    {69, 2}, {64, 2}, {69, 2}, {72, 2}, {76, 4}, {74, 2}, {72, 2},
+    {71, 4}, {71, 2}, {72, 2}, {74, 4}, {76, 4},
+    {72, 4}, {69, 4}, {69, 8},
+    {74, 2}, {69, 2}, {74, 2}, {77, 2}, {81, 4}, {79, 2}, {77, 2},
+    {76, 6}, {72, 2}, {76, 2}, {77, 1}, {76, 1}, {74, 2}, {72, 2},
+    {71, 4}, {71, 2}, {72, 2}, {74, 4}, {76, 4},
+    {72, 4}, {69, 4}, {69, 8},
+};
+#define ROLL_SIZE (sizeof(roll)/sizeof(roll[0]))
 
-    /* Shift into the register. */
-    PORTB &= 0xc3;
-    PORTB |= amp << 2;
+/* Set the pitch of the audio out. */
+void set_audio(unsigned char pitch) {
+    unsigned short lambda;
+
+    /* Look up the wavelength in the table. */
+    lambda = key_us[pitch];
+
+    /* Halve it, because we only represent half the wave here. */
+    lambda >>= 1;
+
+    /* Put the new value into the register. */
+    OCR1A = lambda;
+
+    /* And reset the timer. This gives a very small breath mark/attack to the
+     * note. */
+    TCNT1 = 0x0;
 }
 
 /** Main Function */
 
 int main(void) {
     /** Local Varibles */
-    unsigned char temp = 0, key_idx = 0, key, amplitude;
-    unsigned short delay;
+    unsigned char temp = 0, key_idx = ROLL_SIZE, duration = 0;
+    struct note *note = roll;
+    unsigned short delay = 65535;
 
     initialize();
     clearArray();
 
-    /* Set the timer for CTC mode. */
-    TCCR3A |= _BV(WGM31);
+    /* Enable audio out. */
+    PORTB |= _BV(PB5);
 
-    /* Start timer, no prescaling. */
-    TCCR3B |= _BV(CS30);
+    /* Start timer for audio: CTC, toggle on match, no prescaling. */
+    TCCR1A = _BV(COM1A0);
+    TCCR1B = _BV(WGM12) | _BV(CS10);
 
-    /* Set the initial delay. */
-    OCR3A = key_us[61] >> 2;
-
-    /* Set the timer for CTC mode. */
-    TCCR1A |= _BV(WGM11);
-
-    /* Start timer, prescaled to 1024. */
-    TCCR1B |= _BV(CS12) | _BV(CS10);
-
-    /* Set the delay, permanently. */
-    OCR1A = 1024;
+    /* Set the delay for the first note. */
+    OCR3A = 10;
 
     /* Set the color of LEDs, for debugging with PORTC. */
     PORTB = 0x80;
 
     while (1) {
+        /* If that switch is flipped, mute. */
+        if (PINA & _BV(PA7)) {
+            PORTB &= ~_BV(PB5);
+        } else {
+            PORTB |= _BV(PB5);
+        }
+
         /* Check timer to advance the roll. */
-        if (TIFR1 & _BV(OCF1A)) {
-            TIFR1 = _BV(OCF1A);
+        if (!duration) {
             key_idx++;
-            if (key_idx >= 16) {
+            if (key_idx >= ROLL_SIZE) {
                 key_idx = 0;
             }
-            key = keys[key_idx];
-            //OCR3A = key_us[key] >> 2;
+            note = roll + key_idx;
+            set_audio(note->pitch);
+            PORTC = note->pitch;
+            duration = note->duration;
         }
 
-        PORTC = TCNT3H;
-
-        /* Check timer for sound wave. */
-        if (TIFR3 & _BV(OCF3A)) {
-            TIFR3 = _BV(OCF3A);
-            temp++;
-            if (temp > 0xf) {
-                temp = 0x0;
-            }
-
-            /* Put the audio. */
-            set_audio(temp);
-        }
+        duration--;
+        _delay_loop_2(delay);
+        delay -= 50;
     }
 }//main
