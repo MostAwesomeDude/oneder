@@ -97,11 +97,11 @@ void set_audio(unsigned char pitch) {
 }
 
 static unsigned char red_plane[8] = {
-    0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
+    0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
 };
 
 static unsigned char green_plane[8] = {
-    0x0f, 0x00, 0x0f, 0x00, 0xf0, 0x00, 0xf0, 0x00,
+    0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
 /* Start the scanout timer and interrupt.
@@ -123,8 +123,6 @@ void start_scanout() {
     /* Enable the interrupt for this timer. */
     TIMSK0 |= _BV(OCIE0A);
 
-    PORTC = 0x5a;
-
     /* Enable all interrupts, if not already done. */
     sei();
 }
@@ -137,6 +135,14 @@ ISR(TIMER0_COMPA_vect) {
     row = PORTE & 0x7;
     row++;
     PORTE = row & 0x7;
+
+    /* Clear row. */
+    PORTB |= _BV(PB7) | _BV(PB6);
+    PORTC = 0x0;
+
+    if (row == 0) {
+        return;
+    }
 
     /* Draw greens. */
     PORTB |= _BV(PB7);
@@ -188,6 +194,7 @@ int main(void) {
             }
             note = roll + key_idx;
             set_audio(note->pitch);
+            green_plane[7] = note->pitch;
             duration = note->duration;
         }
 
