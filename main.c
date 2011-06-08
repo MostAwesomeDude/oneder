@@ -96,6 +96,59 @@ void set_audio(unsigned char pitch) {
     TCNT1 = 0x0;
 }
 
+static unsigned char red_plane[8] = {
+    0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
+};
+
+static unsigned char green_plane[8] = {
+    0x0f, 0x00, 0x0f, 0x00, 0xf0, 0x00, 0xf0, 0x00,
+};
+
+/* Start the scanout timer and interrupt.
+ * The scanout timer is always timer0.
+ * Every 3ms, the timer will fire an interrupt. An ISR for that interrupt
+ * could update one row of the LED array every time, and still refresh the
+ * entire array in 24ms, equivalent to ~40fps, flicker-free. */
+void start_scanout() {
+    /* Enable CTC mode. */
+    TCCR0A = _BV(WGM01);
+
+    /* Start timer for scanout: prescale 1024. */
+    TCCR0B = _BV(CS02) | _BV(CS00);
+
+    /* Set the timer to 3 ticks. */
+    TCNT0 = 0x0;
+    OCR0A = 0x3;
+
+    /* Enable the interrupt for this timer. */
+    TIMSK0 |= _BV(OCIE0A);
+
+    PORTC = 0x5a;
+
+    /* Enable all interrupts, if not already done. */
+    sei();
+}
+
+/* ISR for timer0. Updates the LED array. */
+ISR(TIMER0_COMPA_vect) {
+    unsigned char row;
+
+    /* Shift to the next row in the array. */
+    row = PORTE & 0x7;
+    row++;
+    PORTE = row & 0x7;
+
+    /* Draw greens. */
+    PORTB |= _BV(PB7);
+    PORTB &= ~_BV(PB6);
+    PORTC = green_plane[row];
+
+    /* Draw reds. */
+    PORTB |= _BV(PB6);
+    PORTB &= ~_BV(PB7);
+    PORTC = red_plane[row];
+}
+
 /** Main Function */
 
 int main(void) {
@@ -107,6 +160,8 @@ int main(void) {
     initialize();
     clearArray();
 
+    start_scanout();
+
     /* Enable audio out. */
     PORTB |= _BV(PB5);
 
@@ -116,9 +171,6 @@ int main(void) {
 
     /* Set the delay for the first note. */
     OCR3A = 10;
-
-    /* Set the color of LEDs, for debugging with PORTC. */
-    PORTB = 0x80;
 
     while (1) {
         /* If that switch is flipped, mute. */
@@ -136,7 +188,6 @@ int main(void) {
             }
             note = roll + key_idx;
             set_audio(note->pitch);
-            PORTC = note->pitch;
             duration = note->duration;
         }
 
