@@ -53,14 +53,6 @@ void initialize (void) {
     DDRF=0b00000000;
 }
 
-void clearArray(void)
-{
-    PORTB &= ~((1 << PB6) | (1 << PB7));	// Disable latches
-    PORTC = 0x00;
-    PORTB |= (1 << PB6) | (1 << PB7);		// Enable latches
-    PORTB &= ~((1 << PB6) | (1 << PB7));	// Disable latches
-}
-
 struct note {
     unsigned char pitch;
     unsigned char duration;
@@ -106,9 +98,8 @@ static unsigned char green_plane[8] = {
 
 /* Start the scanout timer and interrupt.
  * The scanout timer is always timer0.
- * Every 3ms, the timer will fire an interrupt. An ISR for that interrupt
- * could update one row of the LED array every time, and still refresh the
- * entire array in 24ms, equivalent to ~40fps, flicker-free. */
+ * Every 1ms, the timer will fire an interrupt. An ISR for that interrupt
+ * could update one row of the LED array every time. */
 void start_scanout() {
     /* Enable CTC mode. */
     TCCR0A = _BV(WGM01);
@@ -116,9 +107,9 @@ void start_scanout() {
     /* Start timer for scanout: prescale 1024. */
     TCCR0B = _BV(CS02) | _BV(CS00);
 
-    /* Set the timer to 3 ticks. */
+    /* Set the timer to 1 tick. */
     TCNT0 = 0x0;
-    OCR0A = 0x3;
+    OCR0A = 0x1;
 
     /* Enable the interrupt for this timer. */
     TIMSK0 |= _BV(OCIE0A);
@@ -127,22 +118,21 @@ void start_scanout() {
     sei();
 }
 
+static unsigned char row = 0;
+
 /* ISR for timer0. Updates the LED array. */
 ISR(TIMER0_COMPA_vect) {
-    unsigned char row;
-
     /* Shift to the next row in the array. */
-    row = PORTE & 0x7;
     row++;
-    PORTE = row & 0x7;
+    if (row >= 8) {
+        row = 0;
+    }
+    PORTE &= ~0x7;
+    PORTE |= row;
 
     /* Clear row. */
     PORTB |= _BV(PB7) | _BV(PB6);
     PORTC = 0x0;
-
-    if (row == 0) {
-        return;
-    }
 
     /* Draw greens. */
     PORTB |= _BV(PB7);
@@ -164,7 +154,6 @@ int main(void) {
     unsigned short delay = 65535;
 
     initialize();
-    clearArray();
 
     start_scanout();
 
@@ -175,17 +164,7 @@ int main(void) {
     TCCR1A = _BV(COM1A0);
     TCCR1B = _BV(WGM12) | _BV(CS10);
 
-    /* Set the delay for the first note. */
-    OCR3A = 10;
-
     while (1) {
-        /* If that switch is flipped, mute. */
-        if (PINA & _BV(PA7)) {
-            PORTB &= ~_BV(PB5);
-        } else {
-            PORTB |= _BV(PB5);
-        }
-
         /* Check timer to advance the roll. */
         if (!duration) {
             key_idx++;
@@ -200,6 +179,6 @@ int main(void) {
 
         duration--;
         _delay_loop_2(delay);
-        delay -= 50;
+        delay -= 30;
     }
 }//main
