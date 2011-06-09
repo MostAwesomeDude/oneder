@@ -135,7 +135,7 @@ void clear_full_lines() {
 }
 
 int main() {
-    unsigned char key_idx = ROLL_SIZE, duration = 1, temp, i;
+    unsigned char key_idx = ROLL_SIZE, duration = 1, toggle, i;
     unsigned char buttons[4];
     struct note *note = roll;
     /* Step, in cycles; multiply ms by 256. 250 is the maximum here. */
@@ -149,7 +149,7 @@ int main() {
     /* Set up timer: CTC only, 1024 prescale. */
     power_timer3_enable();
     TCCR3B = _BV(WGM32) | _BV(CS32) | _BV(CS30);
-    OCR3A = 100;
+    OCR3A = 200;
     TCNT3 = 0;
 
     sprite0.green[0] = 0x3;
@@ -201,9 +201,10 @@ int main() {
             duration--;
             TCNT3 = 0;
 
-            sprite0.x++;
-            if (sprite0.x >= 8) {
-                sprite0.x = 0;
+            toggle = !toggle;
+
+            if (toggle) {
+                sprite0.x++;
             }
         }
 
