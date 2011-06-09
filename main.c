@@ -196,16 +196,20 @@ void clear_full_lines() {
 
 /* Rotate the sprite CCW. */
 void rotate_sprite_ccw() {
-    unsigned char i, j, temp[8] = { 0 };
+    unsigned char i, j, tg[8] = { 0 }, tr[8] = { 0 };
     for (i = 0; i < sprite0.h; i++) {
         for (j = 0; j < sprite0.w; j++) {
             if (sprite0.green[i] & _BV(j)) {
-                temp[j] |= _BV(i);
+                tg[sprite0.w - j - 1] |= _BV(i);
+            }
+            if (sprite0.red[i] & _BV(j)) {
+                tr[sprite0.w - j - 1] |= _BV(i);
             }
         }
     }
 
-    memcpy(sprite0.green, temp, 8);
+    memcpy(sprite0.green, tg, 8);
+    memcpy(sprite0.red, tr, 8);
 
     i = sprite0.w;
     sprite0.w = sprite0.h;
