@@ -119,6 +119,44 @@ unsigned char sprite_will_collide() {
     return 0;
 }
 
+unsigned char sprite_will_collide_left() {
+    unsigned char row, i;
+
+    for (i = 0; i < sprite0.h; i++) {
+        /* Mask of current row... */
+        row = sprite0.red[i] << sprite0.y;
+        row |= sprite0.green[i] << sprite0.y;
+        /* Shift left. */
+        row >>= 1;
+        /* AND with mask of next row. */
+        row &= red_plane[i + sprite0.x] | green_plane[i + sprite0.x];
+        if (row) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+unsigned char sprite_will_collide_right() {
+    unsigned char row, i;
+
+    for (i = 0; i < sprite0.h; i++) {
+        /* Mask of current row... */
+        row = sprite0.red[i] << sprite0.y;
+        row |= sprite0.green[i] << sprite0.y;
+        /* Shift left. */
+        row <<= 1;
+        /* AND with mask of next row. */
+        row &= red_plane[i + sprite0.x] | green_plane[i + sprite0.x];
+        if (row) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 void clear_full_lines() {
     unsigned char offset = 0;
     signed char i;
@@ -189,8 +227,9 @@ int main() {
             }
         }
 
+        /* Do Tetris logic. */
         if (buttons[0] == DOWN) {
-            if (sprite0.y) {
+            if (sprite0.y && !sprite_will_collide_left()) {
                 sprite0.y--;
             }
         }
@@ -198,12 +237,11 @@ int main() {
             rotate_sprite_ccw();
         }
         if (buttons[3] == DOWN) {
-            if (sprite0.y + sprite0.w < 8) {
+            if (sprite0.y + sprite0.w < 8 && !sprite_will_collide_right()) {
                 sprite0.y++;
             }
         }
 
-        /* Do Tetris logic. */
         if (sprite_will_collide()) {
             for (i = 0; i < sprite0.x && i + sprite0.x < 8; i++) {
                 red_plane[i + sprite0.x] |= sprite0.green[i] << sprite0.y;
