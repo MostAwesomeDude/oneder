@@ -1,7 +1,7 @@
 /**
 @file adc.h
 @brief Wunderboard ADC Helper Functions
-@version .01 
+@version .01
 
 @section intro Code Overview
 This is the code for the Wunderboard ADC helper functions.
