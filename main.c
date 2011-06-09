@@ -255,16 +255,37 @@ void next_piece(struct sprite *s) {
 
 void change_state() {
     static unsigned char state = FALLING;
+    unsigned char i;
 
-    sprite0.x++;
+    switch (state) {
+        case FALLING:
+            if (sprite_will_collide()) {
+                /* Next frame, we'll cement it. */
+                state = LANDED;
+            } else {
+                /* No collisions next frame, so move the piece downwards. */
+                sprite0.x++;
+            }
+            break;
+        case LANDED:
+            state = PLACED;
+            break;
+        case PLACED:
+            for (i = 0; i < sprite0.x && i + sprite0.x < 8; i++) {
+                red_plane[i + sprite0.x] |= sprite0.green[i] << sprite0.y;
+            }
+            sprite0.x = 0;
+            sprite0.y = 0;
+            next_piece(&sprite0);
+            state = FALLING;
+            break;
+    }
 }
 
 int main() {
     unsigned char key_idx = ROLL_SIZE, duration = 1, toggle = 0, i;
     unsigned char buttons[4];
     struct note *note = roll;
-    /* Step, in cycles; multiply ms by 256. 250 is the maximum here. */
-    unsigned short step = 100 * 256;
     unsigned int seed;
 
     initialize();
@@ -312,15 +333,6 @@ int main() {
             if (sprite0.y + sprite0.w < 8 && !sprite_will_collide_right()) {
                 sprite0.y++;
             }
-        }
-
-        if (sprite_will_collide()) {
-            for (i = 0; i < sprite0.x && i + sprite0.x < 8; i++) {
-                red_plane[i + sprite0.x] |= sprite0.green[i] << sprite0.y;
-            }
-            sprite0.x = 0;
-            sprite0.y = 0;
-            next_piece(&sprite0);
         }
 
         clear_full_lines();
