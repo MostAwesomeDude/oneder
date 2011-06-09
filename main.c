@@ -33,6 +33,7 @@ PORTB:
 #include <util/delay.h>
 #include <avr/power.h>
 
+#include "adc.h"
 #include "audio.h"
 #include "led.h"
 
@@ -254,6 +255,7 @@ int main() {
     struct note *note = roll;
     /* Step, in cycles; multiply ms by 256. 250 is the maximum here. */
     unsigned short step = 100 * 256;
+    unsigned int seed;
 
     initialize();
 
@@ -265,6 +267,11 @@ int main() {
     TCCR3B = _BV(WGM32) | _BV(CS32) | _BV(CS30);
     OCR3A = 200;
     TCNT3 = 0;
+
+    seed = read_adc(5);
+    seed |= read_adc(6) << 8;
+
+    srand(seed);
 
     next_piece(&sprite0);
 
