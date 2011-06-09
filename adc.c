@@ -1,28 +1,40 @@
 /**
-@file adc.c
-@brief Wunderboard ADC Helper Functions
-@version .01
+  @file adc.c
+  @brief Wunderboard ADC Helper Functions
+  @version .01
 
-@section intro Code Overview
-This is the code for the Wunderboard ADC helper functions.
-*/
+  @section intro Code Overview
+  This is the code for the Wunderboard ADC helper functions.
+  */
 
 #include "adc.h"
 
-unsigned char read_adc(uint8_t channel){
+unsigned char read_adc(uint8_t channel) {
 
-	unsigned char test;
+    unsigned char test;
 
-	ADMUX = 0x60 | channel; // Set the channel to the one we want
-	ADCSRA = 0b11000110; // Start a new sample.
-	while ((ADCSRA & 0b00010000) == 0 ); // Wait for a Valid Sample
-	ADCSRA |= 0b00010000; // Tell ADC you have the sample you want.
-	ADCSRA |= 0b01000000; // Start a new sample.
-	while ((ADCSRA & 0b00010000) == 0 ); // Wait for a Valid Sample
-	ADCSRA |= 0b00010000; // Tell ADC you have the sample you want.
-	
-	test = ADCH;
-	ADCSRA = 0x00; // Disable the ADC
+    /* Enable ADC and set the channel to the desirec channel. */
+    ADMUX = _BV(REFS0) | _BV(ADLAR) | channel;
 
-	return (test);
+    /* Start a new sample. */
+    ADCSRA = _BV(ADEN) | _BV(ADSC) | _BV(ADPS2) | _BV(ADPS1);
+
+    /* Get a valid sample. */
+    loop_until_bit_is_set(ADCSRA, ADIF);
+
+    /* Acknowledge the sample. */
+    ADCSRA |= _BV(ADIF);
+
+    /* Get another one. */
+    ADCSRA |= _BV(ADSC);
+    loop_until_bit_is_set(ADCSRA, ADIF);
+    ADCSRA |= _BV(ADIF);
+
+    /* Get our sample. */
+    test = ADCH;
+
+    /* And turn ADC back off. */
+    ADCSRA = 0x00;
+
+    return test;
 }
