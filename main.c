@@ -94,6 +94,20 @@ static struct note roll[] = {
 };
 #define ROLL_SIZE (sizeof(roll)/sizeof(roll[0]))
 
+/* Determine whether sprite0 will collide with anything if moved down one X
+ * level. */
+unsigned char sprite_will_collide() {
+    unsigned char x, row;
+    x = sprite0.x;
+    /* Off the bottom of the screen. */
+    row = sprite0.red[7 - sprite0.x] | sprite0.green[7 - sprite0.x];
+    if (row) {
+        return 1;
+    }
+
+    return 0;
+}
+
 int main() {
     unsigned char key_idx = ROLL_SIZE, duration = 1, temp, i;
     unsigned char buttons[4];
@@ -114,6 +128,7 @@ int main() {
 
     sprite0.green[0] = 0x3;
     sprite0.green[1] = 0x6;
+    sprite0.h = 2;
     sprite0.w = 3;
 
     while (1) {
@@ -149,6 +164,13 @@ int main() {
         } else if (buttons[3] == DOWN) {
             if (sprite0.y + sprite0.w < 8) {
                 sprite0.y++;
+            }
+        }
+
+        /* Do Tetris logic. */
+        if (sprite_will_collide()) {
+            for (i = 0; i < sprite0.x && i + sprite0.x < 8; i++) {
+                red_plane[i + sprite0.x] |= sprite0.green[i] << sprite0.y;
             }
         }
 
