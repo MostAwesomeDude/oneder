@@ -19,3 +19,23 @@ void set_audio(unsigned char pitch) {
      * note. */
     TCNT1 = 0x0;
 }
+
+/* Start the audio timer.
+ * It is probably a good idea to call set_audio() sometime soon after doing
+ * this. */
+void start_audio() {
+    /* Enable audio out. */
+    PORTB |= _BV(PB5);
+
+    /* Start timer for audio: CTC, toggle on match, no prescaling. */
+    TCCR1A = _BV(COM1A0);
+    TCCR1B = _BV(WGM12) | _BV(CS10);
+}
+
+void enable_audio(unsigned char enable) {
+    if (enable) {
+        TCCR1A &= ~_BV(COM1A0);
+    } else {
+        TCCR1A = _BV(COM1A0);
+    }
+}

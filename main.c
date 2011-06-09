@@ -96,21 +96,11 @@ int main() {
     initialize();
 
     start_scanout();
-
-    /* Enable audio out. */
-    PORTB |= _BV(PB5);
-
-    /* Start timer for audio: CTC, toggle on match, no prescaling. */
-    TCCR1A = _BV(COM1A0);
-    TCCR1B = _BV(WGM12) | _BV(CS10);
+    start_audio();
 
     while (1) {
         /* Mute, if switch 7 is set. */
-        if (PINA & _BV(PA7)) {
-            TCCR1A &= ~_BV(COM1A0);
-        } else {
-            TCCR1A = _BV(COM1A0);
-        }
+        enable_audio(PINA & _BV(PA7));
 
         /* Check timer to advance the roll. */
         if (!duration) {
