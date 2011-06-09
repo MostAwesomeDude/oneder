@@ -62,7 +62,7 @@ ISR(TIMER0_COMPA_vect) {
     PORTB &= ~_BV(PB6);
     temp = green_plane[row];
     if (row >= sprite0.x) {
-        temp |= sprite0.green[row - sprite0.x] >> sprite0.y;
+        temp |= sprite0.green[row - sprite0.x] << sprite0.y;
     }
     PORTC = temp;
 
@@ -71,7 +71,7 @@ ISR(TIMER0_COMPA_vect) {
     PORTB &= ~_BV(PB7);
     temp = red_plane[row];
     if (row >= sprite0.x) {
-        temp |= sprite0.red[row - sprite0.x] >> sprite0.y;
+        temp |= sprite0.red[row - sprite0.x] << sprite0.y;
     }
     PORTC = temp;
 }
