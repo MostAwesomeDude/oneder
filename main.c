@@ -153,7 +153,7 @@ void rotate_sprite_ccw() {
 }
 
 int main() {
-    unsigned char key_idx = ROLL_SIZE, duration = 1, toggle, i;
+    unsigned char key_idx = ROLL_SIZE, duration = 1, toggle = 0, i;
     unsigned char buttons[4];
     struct note *note = roll;
     /* Step, in cycles; multiply ms by 256. 250 is the maximum here. */
@@ -223,9 +223,10 @@ int main() {
             duration--;
             TCNT3 = 0;
 
-            toggle = !toggle;
+            toggle++;
 
-            if (toggle) {
+            if (toggle >= 5) {
+                toggle = 0;
                 sprite0.x++;
             }
         }
