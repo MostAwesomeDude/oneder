@@ -125,6 +125,13 @@ int main(void) {
     TCCR1B = _BV(WGM12) | _BV(CS10);
 
     while (1) {
+        /* Mute, if switch 7 is set. */
+        if (PINA & _BV(PA7)) {
+            TCCR1A &= ~_BV(COM1A0);
+        } else {
+            TCCR1A = _BV(COM1A0);
+        }
+
         /* Check timer to advance the roll. */
         if (!duration) {
             key_idx++;
