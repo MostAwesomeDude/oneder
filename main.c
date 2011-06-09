@@ -24,6 +24,10 @@ PORTB:
 #define DOWN 0x1
 #define HELD 0x2
 
+#define FALLING 0x0
+#define LANDED 0x1
+#define PLACED 0x2
+
 /** Includes */
 #include <string.h>
 
@@ -249,6 +253,12 @@ void next_piece(struct sprite *s) {
     }
 }
 
+void change_state() {
+    static unsigned char state = FALLING;
+
+    sprite0.x++;
+}
+
 int main() {
     unsigned char key_idx = ROLL_SIZE, duration = 1, toggle = 0, i;
     unsigned char buttons[4];
@@ -328,7 +338,7 @@ int main() {
 
             if (toggle >= 5) {
                 toggle = 0;
-                sprite0.x++;
+                change_state();
             }
         }
 
