@@ -21,6 +21,8 @@ PORTB:
 #define F_CPU 1000000U
 
 /** Includes */
+#include <string.h>
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sfr_defs.h>
@@ -89,7 +91,7 @@ static struct note roll[] = {
 #define ROLL_SIZE (sizeof(roll)/sizeof(roll[0]))
 
 int main() {
-    unsigned char key_idx = ROLL_SIZE, duration = 0;
+    unsigned char key_idx = ROLL_SIZE, duration = 1, temp;
     struct note *note = roll;
     /* Step, in cycles; multiply ms by 256. 250 is the maximum here. */
     unsigned short step = 100 * 256;
@@ -102,10 +104,11 @@ int main() {
     /* Set up timer: CTC only, 1024 prescale. */
     power_timer3_enable();
     TCCR3B = _BV(WGM32) | _BV(CS32) | _BV(CS30);
-    OCR3A = 1;
+    OCR3A = 100;
     TCNT3 = 0;
 
-    green_plane[7] = 0x1;
+    green_plane[0] = 0x3;
+    green_plane[1] = 0x6;
 
     while (1) {
         /* Mute, if switch 7 is set. */
@@ -114,6 +117,15 @@ int main() {
         /* Check timer to advance the roll. */
         if (TIFR3 & _BV(OCF3A)) {
             TIFR3 |= _BV(OCF3A);
+            duration--;
+            TCNT3 = 0;
+
+            temp = green_plane[7];
+            memmove(green_plane + 1, green_plane, 7);
+            green_plane[0] = temp;
+        }
+
+        if (!duration) {
             key_idx++;
             if (key_idx >= ROLL_SIZE) {
                 key_idx = 0;
@@ -121,9 +133,7 @@ int main() {
             note = roll + key_idx;
             set_audio(note->pitch);
 
-            OCR3A = 100 * note->duration;
-            TCNT3 = 0;
-            green_plane[7] ^= 0x3;
+            duration = note->duration;
         }
     }
 }
