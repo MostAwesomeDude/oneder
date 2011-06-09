@@ -141,6 +141,16 @@ int main() {
             }
         }
 
+        if (buttons[0] == DOWN) {
+            if (sprite0.y) {
+                sprite0.y--;
+            }
+        } else if (buttons[3] == DOWN) {
+            if (sprite0.y < 7) {
+                sprite0.y++;
+            }
+        }
+
         /* Mute, if switch 7 is set. */
         enable_audio(PINA & _BV(PA7));
 
