@@ -259,6 +259,8 @@ void change_state() {
 
     switch (state) {
         case FALLING:
+            /* Clear red color. */
+            memset(sprite0.red, 0, 8);
             if (sprite_will_collide()) {
                 /* Next frame, we'll cement it. */
                 state = LANDED;
@@ -268,6 +270,8 @@ void change_state() {
             }
             break;
         case LANDED:
+            /* Add red color to sprite. */
+            memcpy(sprite0.red, sprite0.green, 8);
             state = PLACED;
             break;
         case PLACED:
