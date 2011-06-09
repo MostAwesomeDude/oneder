@@ -158,18 +158,6 @@ int main() {
             } else if (buttons[i]) {
                 buttons[i] = UP;
             }
-
-            if (buttons[i] == DOWN) {
-                red_plane[0] |= _BV(i);
-            } else {
-                red_plane[0] &= ~_BV(i);
-            }
-
-            if (buttons[i] == HELD) {
-                red_plane[0] |= _BV(i + 4);
-            } else {
-                red_plane[0] &= ~_BV(i + 4);
-            }
         }
 
         if (buttons[0] == DOWN) {
