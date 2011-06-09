@@ -108,6 +108,21 @@ unsigned char sprite_will_collide() {
     return 0;
 }
 
+void clear_full_lines() {
+    unsigned char offset = 0;
+    signed char i;
+
+    for (i = 7; i >= 0; i--) {
+        if (red_plane[i] == 0xff) {
+            /* Full line; clear it. */
+            offset++;
+        } else if (offset) {
+            /* Not a full line? Move it down, if possible. */
+            red_plane[i + offset] = red_plane[i];
+        }
+    }
+}
+
 int main() {
     unsigned char key_idx = ROLL_SIZE, duration = 1, temp, i;
     unsigned char buttons[4];
@@ -173,6 +188,8 @@ int main() {
                 red_plane[i + sprite0.x] |= sprite0.green[i] << sprite0.y;
             }
         }
+
+        clear_full_lines();
 
         /* Mute, if switch 7 is set. */
         enable_audio(PINA & _BV(PA7));
