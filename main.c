@@ -190,6 +190,64 @@ void rotate_sprite_ccw() {
     sprite0.h = i;
 }
 
+void next_piece(struct sprite *s) {
+    memset(s->green, 0, 8);
+    memset(s->red, 0, 8);
+
+    switch (rand() % 7) {
+        /* O block. */
+        case 0:
+            s->green[0] = 0x3;
+            s->green[1] = 0x3;
+            s->w = s->h = 2;
+            break;
+        /* L block. */
+        case 1:
+            s->green[0] = 0x1;
+            s->green[1] = 0x1;
+            s->green[2] = 0x3;
+            s->w = 2;
+            s->h = 3;
+            break;
+        /* J block. */
+        case 2:
+            s->green[0] = 0x2;
+            s->green[1] = 0x2;
+            s->green[2] = 0x3;
+            s->w = 2;
+            s->h = 3;
+            break;
+        /* T block. */
+        case 3:
+            s->green[0] = 0x2;
+            s->green[1] = 0x7;
+            s->w = 3;
+            s->h = 2;
+            break;
+        /* S block. */
+        case 4:
+            s->green[0] = 0x6;
+            s->green[1] = 0x3;
+            s->w = 3;
+            s->h = 2;
+            break;
+        /* Z block. */
+        case 5:
+            s->green[0] = 0x3;
+            s->green[1] = 0x6;
+            s->w = 3;
+            s->h = 2;
+            break;
+        /* I block. */
+        case 6:
+        default:
+            s->green[0] = 0xf;
+            s->w = 4;
+            s->h = 1;
+            break;
+    }
+}
+
 int main() {
     unsigned char key_idx = ROLL_SIZE, duration = 1, toggle = 0, i;
     unsigned char buttons[4];
@@ -208,10 +266,7 @@ int main() {
     OCR3A = 200;
     TCNT3 = 0;
 
-    sprite0.green[0] = 0x3;
-    sprite0.green[1] = 0x6;
-    sprite0.h = 2;
-    sprite0.w = 3;
+    next_piece(&sprite0);
 
     while (1) {
         /* Check buttons. */
@@ -248,6 +303,7 @@ int main() {
             }
             sprite0.x = 0;
             sprite0.y = 0;
+            next_piece(&sprite0);
         }
 
         clear_full_lines();
