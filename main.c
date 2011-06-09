@@ -27,6 +27,7 @@ PORTB:
 #define FALLING 0x0
 #define LANDED 0x1
 #define PLACED 0x2
+#define CLEARING 0x3
 
 /** Includes */
 #include <string.h>
@@ -162,6 +163,21 @@ unsigned char sprite_will_collide_right() {
     return 0;
 }
 
+/* Mark any lines which are full, and return whether any lines were marked. */
+unsigned char mark_full_lines() {
+    unsigned char retval = 0, i;
+
+    for (i = 0; i < 8; i++) {
+        if (red_plane[i] == 0xff) {
+            /* Full line! */
+            green_plane[i] = 0xff;
+            retval++;
+        }
+    }
+
+    return retval;
+}
+
 void clear_full_lines() {
     unsigned char offset = 0;
     signed char i;
@@ -173,6 +189,7 @@ void clear_full_lines() {
         } else if (offset) {
             /* Not a full line? Move it down, if possible. */
             red_plane[i + offset] = red_plane[i];
+            green_plane[i + offset] = green_plane[i];
         }
     }
 }
@@ -254,7 +271,7 @@ void next_piece(struct sprite *s) {
 }
 
 void change_state() {
-    static unsigned char state = FALLING;
+    static unsigned char state = FALLING, counter;
     unsigned char i;
 
     switch (state) {
@@ -287,7 +304,18 @@ void change_state() {
             sprite0.x = 0;
             sprite0.y = 0;
             next_piece(&sprite0);
-            state = FALLING;
+            if (mark_full_lines()) {
+                state = CLEARING;
+                counter = 2;
+            } else {
+                state = FALLING;
+            }
+            break;
+        case CLEARING:
+            if (!counter--) {
+                clear_full_lines();
+                state = FALLING;
+            }
             break;
     }
 }
@@ -344,8 +372,6 @@ int main() {
                 sprite0.y++;
             }
         }
-
-        clear_full_lines();
 
         /* Mute, if switch 7 is set. */
         enable_audio(PINA & _BV(PA7));
