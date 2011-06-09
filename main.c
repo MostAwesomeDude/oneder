@@ -25,6 +25,7 @@ PORTB:
 #include <avr/interrupt.h>
 #include <avr/sfr_defs.h>
 #include <util/delay.h>
+#include <avr/power.h>
 
 #include "audio.h"
 #include "led.h"
@@ -98,22 +99,31 @@ int main() {
     start_scanout();
     start_audio();
 
+    /* Set up timer: CTC only, 1024 prescale. */
+    power_timer3_enable();
+    TCCR3B = _BV(WGM32) | _BV(CS32) | _BV(CS30);
+    OCR3A = 1;
+    TCNT3 = 0;
+
+    green_plane[7] = 0x1;
+
     while (1) {
         /* Mute, if switch 7 is set. */
         enable_audio(PINA & _BV(PA7));
 
         /* Check timer to advance the roll. */
-        if (!duration) {
+        if (TIFR3 & _BV(OCF3A)) {
+            TIFR3 |= _BV(OCF3A);
             key_idx++;
             if (key_idx >= ROLL_SIZE) {
                 key_idx = 0;
             }
             note = roll + key_idx;
             set_audio(note->pitch);
-            duration = note->duration;
-        }
 
-        duration--;
-        _delay_loop_2(step);
+            OCR3A = 100 * note->duration;
+            TCNT3 = 0;
+            green_plane[7] ^= 0x3;
+        }
     }
 }
