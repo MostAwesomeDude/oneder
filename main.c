@@ -20,6 +20,10 @@ PORTB:
 /** Constants */
 #define F_CPU 1000000U
 
+#define UP 0x0
+#define DOWN 0x1
+#define HELD 0x2
+
 /** Includes */
 #include <string.h>
 
@@ -91,7 +95,8 @@ static struct note roll[] = {
 #define ROLL_SIZE (sizeof(roll)/sizeof(roll[0]))
 
 int main() {
-    unsigned char key_idx = ROLL_SIZE, duration = 1, temp;
+    unsigned char key_idx = ROLL_SIZE, duration = 1, temp, i;
+    unsigned char buttons[4];
     struct note *note = roll;
     /* Step, in cycles; multiply ms by 256. 250 is the maximum here. */
     unsigned short step = 100 * 256;
@@ -111,6 +116,31 @@ int main() {
     sprite0.green[1] = 0x6;
 
     while (1) {
+        /* Check buttons. */
+        for (i = 0; i < 4; i++) {
+            if (PINA & _BV(i)) {
+                if (buttons[i]) {
+                    buttons[i] = HELD;
+                } else {
+                    buttons[i] = DOWN;
+                }
+            } else if (buttons[i]) {
+                buttons[i] = UP;
+            }
+
+            if (buttons[i] == DOWN) {
+                red_plane[0] |= _BV(i);
+            } else {
+                red_plane[0] &= ~_BV(i);
+            }
+
+            if (buttons[i] == HELD) {
+                red_plane[0] |= _BV(i + 4);
+            } else {
+                red_plane[0] &= ~_BV(i + 4);
+            }
+        }
+
         /* Mute, if switch 7 is set. */
         enable_audio(PINA & _BV(PA7));
 
