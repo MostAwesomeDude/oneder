@@ -114,6 +114,7 @@ int main() {
 
     sprite0.green[0] = 0x3;
     sprite0.green[1] = 0x6;
+    sprite0.w = 3;
 
     while (1) {
         /* Check buttons. */
@@ -146,7 +147,7 @@ int main() {
                 sprite0.y--;
             }
         } else if (buttons[3] == DOWN) {
-            if (sprite0.y < 7) {
+            if (sprite0.y + sprite0.w < 8) {
                 sprite0.y++;
             }
         }
@@ -156,7 +157,7 @@ int main() {
 
         /* Check timer to advance the roll. */
         if (TIFR3 & _BV(OCF3A)) {
-            TIFR3 |= _BV(OCF3A);
+            TIFR3 = _BV(OCF3A);
             duration--;
             TCNT3 = 0;
 
