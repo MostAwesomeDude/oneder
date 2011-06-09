@@ -107,8 +107,8 @@ int main() {
     OCR3A = 100;
     TCNT3 = 0;
 
-    green_plane[0] = 0x3;
-    green_plane[1] = 0x6;
+    sprite0.green[0] = 0x3;
+    sprite0.green[1] = 0x6;
 
     while (1) {
         /* Mute, if switch 7 is set. */
@@ -120,9 +120,10 @@ int main() {
             duration--;
             TCNT3 = 0;
 
-            temp = green_plane[7];
-            memmove(green_plane + 1, green_plane, 7);
-            green_plane[0] = temp;
+            sprite0.x++;
+            if (sprite0.x >= 8) {
+                sprite0.x = 0;
+            }
         }
 
         if (!duration) {

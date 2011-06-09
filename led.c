@@ -5,6 +5,8 @@
 #include <avr/interrupt.h>
 #include <avr/sfr_defs.h>
 
+#include "led.h"
+
 unsigned char red_plane[8] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
@@ -12,6 +14,8 @@ unsigned char red_plane[8] = {
 unsigned char green_plane[8] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
+
+struct sprite sprite0;
 
 /* Start the scanout timer and interrupt.
  * The scanout timer is always timer0.
@@ -39,6 +43,8 @@ static unsigned char row = 0;
 
 /* ISR for timer0. Updates the LED array. */
 ISR(TIMER0_COMPA_vect) {
+    unsigned char temp;
+
     /* Shift to the next row in the array. */
     row++;
     if (row >= 8) {
@@ -54,10 +60,18 @@ ISR(TIMER0_COMPA_vect) {
     /* Draw greens. */
     PORTB |= _BV(PB7);
     PORTB &= ~_BV(PB6);
-    PORTC = green_plane[row];
+    temp = green_plane[row];
+    if (row >= sprite0.x) {
+        temp |= sprite0.green[row - sprite0.x] >> sprite0.y;
+    }
+    PORTC = temp;
 
     /* Draw reds. */
     PORTB |= _BV(PB6);
     PORTB &= ~_BV(PB7);
-    PORTC = red_plane[row];
+    temp = red_plane[row];
+    if (row >= sprite0.x) {
+        temp |= sprite0.red[row - sprite0.x] >> sprite0.y;
+    }
+    PORTC = temp;
 }
