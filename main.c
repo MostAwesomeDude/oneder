@@ -270,9 +270,15 @@ void change_state() {
             }
             break;
         case LANDED:
-            /* Add red color to sprite. */
-            memcpy(sprite0.red, sprite0.green, 8);
-            state = PLACED;
+            /* If we're still colliding, then this piece is placed. */
+            if (sprite_will_collide()) {
+                /* Add red color to sprite. */
+                memcpy(sprite0.red, sprite0.green, 8);
+
+                state = PLACED;
+            } else {
+                state = FALLING;
+            }
             break;
         case PLACED:
             for (i = 0; i < sprite0.x && i + sprite0.x < 8; i++) {
