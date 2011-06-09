@@ -110,8 +110,8 @@ void set_audio(unsigned char pitch) {
 int main(void) {
     unsigned char key_idx = ROLL_SIZE, duration = 0;
     struct note *note = roll;
-    /* Step, in cycles; multiply ms by 256. */
-    unsigned short step = 200 * 256;
+    /* Step, in cycles; multiply ms by 256. 250 is the maximum here. */
+    unsigned short step = 100 * 256;
 
     initialize();
 
