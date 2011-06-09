@@ -134,6 +134,24 @@ void clear_full_lines() {
     }
 }
 
+/* Rotate the sprite CCW. */
+void rotate_sprite_ccw() {
+    unsigned char i, j, temp[8] = { 0 };
+    for (i = 0; i < sprite0.h; i++) {
+        for (j = 0; j < sprite0.w; j++) {
+            if (sprite0.green[i] & _BV(j)) {
+                temp[j] |= _BV(i);
+            }
+        }
+    }
+
+    memcpy(sprite0.green, temp, 8);
+
+    i = sprite0.w;
+    sprite0.w = sprite0.h;
+    sprite0.h = i;
+}
+
 int main() {
     unsigned char key_idx = ROLL_SIZE, duration = 1, toggle, i;
     unsigned char buttons[4];
@@ -175,7 +193,11 @@ int main() {
             if (sprite0.y) {
                 sprite0.y--;
             }
-        } else if (buttons[3] == DOWN) {
+        }
+        if (buttons[1] == DOWN) {
+            rotate_sprite_ccw();
+        }
+        if (buttons[3] == DOWN) {
             if (sprite0.y + sprite0.w < 8) {
                 sprite0.y++;
             }
