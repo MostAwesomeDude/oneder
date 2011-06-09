@@ -26,7 +26,7 @@ PORTB:
 #include <avr/sfr_defs.h>
 #include <util/delay.h>
 
-#include "keys.h"
+#include "audio.h"
 #include "led.h"
 
 /** Global Variables */
@@ -87,27 +87,7 @@ static struct note roll[] = {
 };
 #define ROLL_SIZE (sizeof(roll)/sizeof(roll[0]))
 
-/* Set the pitch of the audio out. */
-void set_audio(unsigned char pitch) {
-    unsigned short lambda;
-
-    /* Look up the wavelength in the table. */
-    lambda = key_us[pitch];
-
-    /* Halve it, because we only represent half the wave here. */
-    lambda >>= 1;
-
-    /* Put the new value into the register. */
-    OCR1A = lambda;
-
-    /* And reset the timer. This gives a very small breath mark/attack to the
-     * note. */
-    TCNT1 = 0x0;
-}
-
-/** Main Function */
-
-int main(void) {
+int main() {
     unsigned char key_idx = ROLL_SIZE, duration = 0;
     struct note *note = roll;
     /* Step, in cycles; multiply ms by 256. 250 is the maximum here. */
@@ -140,11 +120,10 @@ int main(void) {
             }
             note = roll + key_idx;
             set_audio(note->pitch);
-            green_plane[7] = note->pitch;
             duration = note->duration;
         }
 
         duration--;
         _delay_loop_2(step);
     }
-}//main
+}
