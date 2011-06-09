@@ -97,12 +97,23 @@ static struct note roll[] = {
 /* Determine whether sprite0 will collide with anything if moved down one X
  * level. */
 unsigned char sprite_will_collide() {
-    unsigned char x, row;
-    x = sprite0.x;
+    unsigned char x, row, i;
+    x = 7 - sprite0.x;
     /* Off the bottom of the screen. */
-    row = sprite0.red[7 - sprite0.x] | sprite0.green[7 - sprite0.x];
+    row = sprite0.red[x] | sprite0.green[x];
     if (row) {
         return 1;
+    }
+
+    for (i = 0; i < sprite0.h; i++) {
+        /* Mask of current row... */
+        row = sprite0.red[i] << sprite0.y;
+        row |= sprite0.green[i] << sprite0.y;
+        /* AND with mask of next row. */
+        row &= red_plane[i + sprite0.x + 1] | green_plane[i + sprite0.x + 1];
+        if (row) {
+            return 1;
+        }
     }
 
     return 0;
@@ -175,6 +186,8 @@ int main() {
             for (i = 0; i < sprite0.x && i + sprite0.x < 8; i++) {
                 red_plane[i + sprite0.x] |= sprite0.green[i] << sprite0.y;
             }
+            sprite0.x = 0;
+            sprite0.y = 0;
         }
 
         clear_full_lines();
