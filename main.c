@@ -178,6 +178,8 @@ unsigned char mark_full_lines() {
     return retval;
 }
 
+static unsigned char lines = 0;
+
 void clear_full_lines() {
     unsigned char offset = 0;
     signed char i;
@@ -192,6 +194,8 @@ void clear_full_lines() {
             green_plane[i + offset] = green_plane[i];
         }
     }
+
+    lines += offset;
 }
 
 /* Rotate the sprite CCW. */
@@ -349,6 +353,12 @@ int main() {
     next_piece(&sprite0);
 
     while (1) {
+        /* Check line count. */
+        if (lines >= 1) {
+            lines -= 1;
+            OCR3A -= 10;
+        }
+
         /* Check buttons. */
         for (i = 0; i < 4; i++) {
             if (PINA & _BV(i)) {
