@@ -13,7 +13,7 @@ unsigned char read_adc(uint8_t channel) {
 
     unsigned char test;
 
-    /* Enable ADC and set the channel to the desirec channel. */
+    /* Enable ADC and set the channel to the desired channel. */
     ADMUX = _BV(REFS0) | _BV(ADLAR) | channel;
 
     /* Start a new sample. */
